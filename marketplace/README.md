@@ -4,3 +4,8 @@
 - `sitehomeaccess-logo-cohorts.png`: cohort-access concept focused on selective access.
 
 Both source images are square PNG files with transparent backgrounds and no embedded text.
+
+## Screenshots
+
+- `sitehomeaccess-settings.png`: complete plugin settings page on Moodle 4.5.
+- `sitehomeaccess-site-home-navigation.png`: Site Home navigation visible to an allowed administrator.

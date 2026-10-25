@@ -39,11 +39,23 @@ final class runtime {
             return self::$testoverride;
         }
 
-        return !(defined('CLI_SCRIPT') && CLI_SCRIPT)
-            && !(defined('PHPUNIT_TEST') && PHPUNIT_TEST)
-            && !(defined('WS_SERVER') && WS_SERVER)
-            && !during_initial_install()
-            && empty($CFG->upgraderunning);
+        foreach (['CLI_SCRIPT', 'PHPUNIT_TEST', 'WS_SERVER'] as $constant) {
+            if (self::constant_is_true($constant)) {
+                return false;
+            }
+        }
+
+        return !during_initial_install() && empty($CFG->upgraderunning);
+    }
+
+    /**
+     * Whether a runtime-mode constant is defined and enabled.
+     *
+     * @param string $name Constant name.
+     * @return bool
+     */
+    private static function constant_is_true(string $name): bool {
+        return defined($name) && (bool)constant($name);
     }
 
     /**
