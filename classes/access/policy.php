@@ -42,7 +42,7 @@ final class policy {
      * @return decision
      */
     public static function evaluate(): decision {
-        global $DB, $USER;
+        global $USER;
 
         $user = $USER;
         $config = get_config('local_sitehomeaccess');
@@ -62,39 +62,82 @@ final class policy {
             return self::$decisioncache[$cachekey];
         }
 
+        return self::$decisioncache[$cachekey] = self::evaluate_uncached($user, $config, $switchedrole, $loggedinas);
+    }
+
+    /**
+     * Evaluate an uncached access decision.
+     *
+     * @param \stdClass $user Current user.
+     * @param \stdClass $config Plugin configuration.
+     * @param bool $switchedrole Whether the user has switched role on Site Home.
+     * @param bool $loggedinas Whether the session is impersonating another user.
+     * @return decision
+     */
+    private static function evaluate_uncached(
+        \stdClass $user,
+        \stdClass $config,
+        bool $switchedrole,
+        bool $loggedinas,
+    ): decision {
         if (empty($config->enabled)) {
-            return self::$decisioncache[$cachekey] = new decision(true, decision::REASON_DISABLED);
+            return new decision(true, decision::REASON_DISABLED);
         }
 
         if (empty($user->id) || isguestuser($user)) {
             $allowed = ($config->guestaccess ?? self::ACCESS_VISIBLE) !== self::ACCESS_HIDDEN;
-            return self::$decisioncache[$cachekey] = new decision($allowed, decision::REASON_GUEST);
+            return new decision($allowed, decision::REASON_GUEST);
         }
 
         if (!$loggedinas && !$switchedrole && is_siteadmin($user)) {
-            return self::$decisioncache[$cachekey] = new decision(true, decision::REASON_ADMIN);
+            return new decision(true, decision::REASON_ADMIN);
         }
 
         $capabilitycontext = $switchedrole ? context_course::instance(SITEID) : context_system::instance();
         if (has_capability('local/sitehomeaccess:bypass', $capabilitycontext, $user)) {
-            return self::$decisioncache[$cachekey] = new decision(true, decision::REASON_CAPABILITY);
+            return new decision(true, decision::REASON_CAPABILITY);
         }
 
+        return self::evaluate_cohort_rule((int)$user->id, $config, $switchedrole);
+    }
+
+    /**
+     * Apply the configured default and cohort exception rule.
+     *
+     * @param int $userid User ID.
+     * @param \stdClass $config Plugin configuration.
+     * @param bool $switchedrole Whether the user has switched role on Site Home.
+     * @return decision
+     */
+    private static function evaluate_cohort_rule(int $userid, \stdClass $config, bool $switchedrole): decision {
         $defaultallowed = ($config->defaultaccess ?? self::ACCESS_VISIBLE) !== self::ACCESS_HIDDEN;
 
         // Cohorts are deliberately ignored while switching role so the effective role can be tested.
-        if (!$switchedrole) {
-            $cohortids = self::get_configured_cohort_ids((string)($config->cohortexceptions ?? ''));
-            if ($cohortids) {
-                [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED, 'cohort');
-                $params['userid'] = (int)$user->id;
-                if ($DB->record_exists_select('cohort_members', "userid = :userid AND cohortid {$insql}", $params)) {
-                    return self::$decisioncache[$cachekey] = new decision(!$defaultallowed, decision::REASON_COHORT);
-                }
-            }
+        if (!$switchedrole && self::is_configured_cohort_member($userid, $config)) {
+            return new decision(!$defaultallowed, decision::REASON_COHORT);
         }
 
-        return self::$decisioncache[$cachekey] = new decision($defaultallowed, decision::REASON_DEFAULT);
+        return new decision($defaultallowed, decision::REASON_DEFAULT);
+    }
+
+    /**
+     * Whether a user belongs to any configured exception cohort.
+     *
+     * @param int $userid User ID.
+     * @param \stdClass $config Plugin configuration.
+     * @return bool
+     */
+    private static function is_configured_cohort_member(int $userid, \stdClass $config): bool {
+        global $DB;
+
+        $cohortids = self::get_configured_cohort_ids((string)($config->cohortexceptions ?? ''));
+        if (!$cohortids) {
+            return false;
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($cohortids, SQL_PARAMS_NAMED, 'cohort');
+        $params['userid'] = $userid;
+        return $DB->record_exists_select('cohort_members', "userid = :userid AND cohortid {$insql}", $params);
     }
 
     /**

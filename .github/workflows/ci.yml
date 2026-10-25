@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -93,7 +95,6 @@ jobs:
 
       - name: PHP mess detector
         if: ${{ !cancelled() }}
-        continue-on-error: true
         run: moodle-plugin-ci phpmd
 
       - name: Moodle coding standards
@@ -153,3 +154,86 @@ jobs:
         env:
           TEST_RESULT: ${{ needs.test.result }}
         run: test "$TEST_RESULT" = success
+
+  release:
+    name: Release package
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs:
+      - required
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: plugin
+          persist-credentials: false
+
+      - name: Validate tag and plugin metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          component=$(awk -F"'" '/^\$plugin->component = / {print $2}' plugin/version.php)
+          release=$(awk -F"'" '/^\$plugin->release = / {print $2}' plugin/version.php)
+          tagrelease=${GITHUB_REF_NAME#v}
+
+          test "$component" = 'local_sitehomeaccess'
+          test -n "$release"
+          test "$tagrelease" = "$release"
+
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "archive=moodle-local_sitehomeaccess-$release.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build package from tagged tree
+        env:
+          ARCHIVE: ${{ steps.metadata.outputs.archive }}
+        run: |
+          set -euo pipefail
+          mkdir package
+          git -C plugin archive --format=tar --prefix=sitehomeaccess/ HEAD | tar -xf - -C package
+          rm -rf package/sitehomeaccess/.github package/sitehomeaccess/marketplace
+          (cd package && zip -q -r "../$ARCHIVE" sitehomeaccess)
+
+      - name: Validate package contents
+        env:
+          ARCHIVE: ${{ steps.metadata.outputs.archive }}
+        run: |
+          set -euo pipefail
+          unzip -t "$ARCHIVE"
+          unzip -Z1 "$ARCHIVE" > archive-contents.txt
+          grep -qx 'sitehomeaccess/version.php' archive-contents.txt
+          grep -qx 'sitehomeaccess/README.md' archive-contents.txt
+          grep -qx 'sitehomeaccess/LICENSE' archive-contents.txt
+
+          if grep -Eq '(^|/)(\.git|\.github|marketplace|\.DS_Store)(/|$)' archive-contents.txt; then
+            echo 'Development-only content was found in the release archive.' >&2
+            exit 1
+          fi
+
+          sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+
+      - name: Upload validated package artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: sitehomeaccess-${{ steps.metadata.outputs.release }}
+          path: |
+            ${{ steps.metadata.outputs.archive }}
+            ${{ steps.metadata.outputs.archive }}.sha256
+          if-no-files-found: error
+
+      - name: Publish GitHub release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: ${{ steps.metadata.outputs.archive }}
+          RELEASE: ${{ steps.metadata.outputs.release }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            "$ARCHIVE" \
+            "$ARCHIVE.sha256" \
+            --verify-tag \
+            --title "Site Home Access $RELEASE" \
+            --generate-notes

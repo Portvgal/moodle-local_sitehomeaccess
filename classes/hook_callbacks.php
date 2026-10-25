@@ -91,6 +91,8 @@ final class hook_callbacks {
     public static function after_config(after_config $hook): void {
         global $CFG, $SCRIPT;
 
+        unset($hook);
+
         if (!runtime::should_enforce() || $SCRIPT !== '/pluginfile.php' || policy::evaluate()->allowed) {
             return;
         }

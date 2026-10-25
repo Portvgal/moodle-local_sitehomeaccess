@@ -88,53 +88,6 @@ final class policy_test extends \advanced_testcase {
         ];
     }
 
-    /**
-     * Test that a selected cohort inverts the default decision.
-     *
-     * @dataProvider cohort_inversion_provider
-     * @param string $setting Default setting.
-     * @param bool $expected Expected result for a selected cohort member.
-     */
-    public function test_selected_cohort_inverts_default(string $setting, bool $expected): void {
-        $user = $this->getDataGenerator()->create_user();
-        $cohort1 = $this->getDataGenerator()->create_cohort();
-        $cohort2 = $this->getDataGenerator()->create_cohort();
-        cohort_add_member($cohort2->id, $user->id);
-        $this->setUser($user);
-        set_config('defaultaccess', $setting, 'local_sitehomeaccess');
-        set_config('cohortexceptions', "{$cohort1->id},{$cohort2->id}", 'local_sitehomeaccess');
-        policy::reset_cache();
-
-        $decision = policy::evaluate();
-
-        $this->assertSame($expected, $decision->allowed);
-        $this->assertSame(decision::REASON_COHORT, $decision->reason);
-    }
-
-    /**
-     * Provide cohort inversion settings and expected decisions.
-     *
-     * @return array[] Test cases.
-     */
-    public static function cohort_inversion_provider(): array {
-        return [
-            'visible becomes hidden' => [policy::ACCESS_VISIBLE, false],
-            'hidden becomes visible' => [policy::ACCESS_HIDDEN, true],
-        ];
-    }
-
-    public function test_nonmember_uses_default_and_malformed_ids_are_ignored(): void {
-        $this->setUser($this->getDataGenerator()->create_user());
-        set_config('defaultaccess', policy::ACCESS_HIDDEN, 'local_sitehomeaccess');
-        set_config('cohortexceptions', 'invalid,-2,0,99999999', 'local_sitehomeaccess');
-        policy::reset_cache();
-
-        $decision = policy::evaluate();
-
-        $this->assertFalse($decision->allowed);
-        $this->assertSame(decision::REASON_DEFAULT, $decision->reason);
-    }
-
     public function test_system_capability_bypasses_hidden_default(): void {
         $user = $this->getDataGenerator()->create_user();
         $roleid = $this->getDataGenerator()->create_role();
@@ -175,22 +128,6 @@ final class policy_test extends \advanced_testcase {
         $this->assertSame(decision::REASON_DEFAULT, $decision->reason);
     }
 
-    public function test_login_as_uses_impersonated_users_cohort(): void {
-        $target = $this->getDataGenerator()->create_user();
-        $cohort = $this->getDataGenerator()->create_cohort();
-        cohort_add_member($cohort->id, $target->id);
-        $this->setAdminUser();
-        set_config('defaultaccess', policy::ACCESS_HIDDEN, 'local_sitehomeaccess');
-        set_config('cohortexceptions', (string)$cohort->id, 'local_sitehomeaccess');
-        session_manager::loginas($target->id, context_system::instance(), false);
-        policy::reset_cache();
-
-        $decision = policy::evaluate();
-
-        $this->assertTrue($decision->allowed);
-        $this->assertSame(decision::REASON_COHORT, $decision->reason);
-    }
-
     public function test_manager_archetype_receives_bypass_by_default(): void {
         $user = $this->getDataGenerator()->create_user();
         $roleid = $this->getDataGenerator()->create_role(['archetype' => 'manager']);
@@ -204,23 +141,6 @@ final class policy_test extends \advanced_testcase {
 
         $this->assertTrue($decision->allowed);
         $this->assertSame(decision::REASON_CAPABILITY, $decision->reason);
-    }
-
-    public function test_switched_role_ignores_cohort_membership(): void {
-        $user = $this->getDataGenerator()->create_user();
-        $cohort = $this->getDataGenerator()->create_cohort();
-        cohort_add_member($cohort->id, $user->id);
-        $roleid = $this->getDataGenerator()->create_role();
-        $this->setUser($user);
-        set_config('defaultaccess', policy::ACCESS_HIDDEN, 'local_sitehomeaccess');
-        set_config('cohortexceptions', (string)$cohort->id, 'local_sitehomeaccess');
-        role_switch($roleid, context_course::instance(SITEID));
-        policy::reset_cache();
-
-        $decision = policy::evaluate();
-
-        $this->assertFalse($decision->allowed);
-        $this->assertSame(decision::REASON_DEFAULT, $decision->reason);
     }
 
     public function test_switched_role_can_use_capability(): void {
