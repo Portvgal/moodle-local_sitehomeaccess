@@ -91,9 +91,8 @@ final class policy {
                 if ($DB->record_exists_select('cohort_members', "userid = :userid AND cohortid {$insql}", $params)) {
                     return self::$decisioncache[$cachekey] = new decision(!$defaultallowed, decision::REASON_COHORT);
                 }
-            }
-        }
-
+    }
+}
         return self::$decisioncache[$cachekey] = new decision($defaultallowed, decision::REASON_DEFAULT);
     }
 
@@ -118,4 +117,3 @@ final class policy {
         return array_values(array_unique(array_map('intval', $ids)));
     }
 }
-
