@@ -1,4 +1,4 @@
-@local_sitehomeaccess @javascript
+@local @local_sitehomeaccess @javascript
 Feature: Configure Site Home access without existing cohorts
   In order to understand how to configure cohort exceptions
   As a site administrator
@@ -9,4 +9,3 @@ Feature: Configure Site Home access without existing cohorts
     When I navigate to "Plugins > Local plugins > Site Home access" in site administration
     Then I should see "No cohorts are available."
     And "Manage cohorts" "link" should exist
-

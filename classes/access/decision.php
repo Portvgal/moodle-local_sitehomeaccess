@@ -46,9 +46,10 @@ final class decision {
      * @param string $reason Machine-readable reason.
      */
     public function __construct(
+        /** @var bool Whether access is allowed. */
         public readonly bool $allowed,
+        /** @var string Machine-readable reason. */
         public readonly string $reason,
     ) {
     }
 }
-

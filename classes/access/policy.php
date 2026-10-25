@@ -111,12 +111,11 @@ final class policy {
      * @return int[]
      */
     private static function get_configured_cohort_ids(string $value): array {
-        $ids = array_filter(array_map('trim', explode(',', $value)), static function(string $id): bool {
+        $ids = array_filter(array_map('trim', explode(',', $value)), static function (string $id): bool {
             return ctype_digit($id) && (int)$id > 0;
         });
 
         return array_values(array_unique(array_map('intval', $ids)));
     }
-
 }
 

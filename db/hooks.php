@@ -38,4 +38,3 @@ $callbacks = [
         'callback' => [\local_sitehomeaccess\hook_callbacks::class, 'after_config'],
     ],
 ];
-

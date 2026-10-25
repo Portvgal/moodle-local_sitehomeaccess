@@ -73,4 +73,3 @@ final class protected_context_test extends \advanced_testcase {
         $this->assertFalse(protected_context::context_id_is_protected(99999999));
     }
 }
-

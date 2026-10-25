@@ -62,4 +62,3 @@ final class protected_context {
         return $context instanceof context && self::contains($context);
     }
 }
-

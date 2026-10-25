@@ -35,4 +35,3 @@ final class provider implements null_provider {
         return 'privacy:metadata';
     }
 }
-

@@ -1,4 +1,4 @@
-@local_sitehomeaccess @javascript
+@local @local_sitehomeaccess @javascript
 Feature: Control browser access to Site Home
   In order to keep Site Home available to the intended audience
   As a site administrator
@@ -43,4 +43,3 @@ Feature: Control browser access to Site Home
     Then I should see "Home" in the ".primary-navigation" "css_element"
     When I am on site homepage
     Then I should not see "Site Home is not available for your account."
-

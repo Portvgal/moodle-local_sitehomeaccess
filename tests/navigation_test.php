@@ -78,4 +78,3 @@ final class navigation_test extends \advanced_testcase {
         $this->assertNotNull($view->get('home'));
     }
 }
-

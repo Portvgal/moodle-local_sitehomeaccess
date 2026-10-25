@@ -110,4 +110,3 @@ final class hook_callbacks {
         send_file_not_found();
     }
 }
-

@@ -93,4 +93,3 @@ final class setting_cohort_multiselect extends admin_setting_configmultiselect {
         return $html;
     }
 }
-

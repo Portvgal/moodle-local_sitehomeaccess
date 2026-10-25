@@ -40,9 +40,8 @@ $string['guestaccess_allow'] = 'Allow access to Site Home';
 $string['guestaccess_desc'] = 'Choose whether visitors can see Site Home before they log in.';
 $string['guestaccess_login'] = 'Require them to log in';
 $string['local/sitehomeaccess:bypass'] = 'Always access Site Home';
-$string['manageroles'] = 'Manage system role permissions';
 $string['managecohorts'] = 'Manage cohorts';
+$string['manageroles'] = 'Manage system role permissions';
 $string['nocohorts_desc'] = 'No cohorts are available. {$a}, create at least one cohort, then return to this page to select cohort exceptions.';
 $string['pluginname'] = 'Site Home access';
 $string['privacy:metadata'] = 'The Site Home access plugin does not store personal data. It reads existing role and cohort membership information only while evaluating access.';
-

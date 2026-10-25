@@ -59,6 +59,8 @@ final class policy_test extends \advanced_testcase {
     }
 
     /**
+     * Test the configured default access decision.
+     *
      * @dataProvider default_access_provider
      * @param string $setting Setting value.
      * @param bool $expected Expected decision.
@@ -74,6 +76,11 @@ final class policy_test extends \advanced_testcase {
         $this->assertSame(decision::REASON_DEFAULT, $decision->reason);
     }
 
+    /**
+     * Provide default access settings and expected decisions.
+     *
+     * @return array[] Test cases.
+     */
     public static function default_access_provider(): array {
         return [
             'visible' => [policy::ACCESS_VISIBLE, true],
@@ -82,6 +89,8 @@ final class policy_test extends \advanced_testcase {
     }
 
     /**
+     * Test that a selected cohort inverts the default decision.
+     *
      * @dataProvider cohort_inversion_provider
      * @param string $setting Default setting.
      * @param bool $expected Expected result for a selected cohort member.
@@ -102,6 +111,11 @@ final class policy_test extends \advanced_testcase {
         $this->assertSame(decision::REASON_COHORT, $decision->reason);
     }
 
+    /**
+     * Provide cohort inversion settings and expected decisions.
+     *
+     * @return array[] Test cases.
+     */
     public static function cohort_inversion_provider(): array {
         return [
             'visible becomes hidden' => [policy::ACCESS_VISIBLE, false],
@@ -226,6 +240,8 @@ final class policy_test extends \advanced_testcase {
     }
 
     /**
+     * Test the independent guest access setting.
+     *
      * @dataProvider guest_access_provider
      * @param string $setting Guest setting.
      * @param bool $expected Expected decision.
@@ -241,6 +257,11 @@ final class policy_test extends \advanced_testcase {
         $this->assertSame(decision::REASON_GUEST, $decision->reason);
     }
 
+    /**
+     * Provide guest access settings and expected decisions.
+     *
+     * @return array[] Test cases.
+     */
     public static function guest_access_provider(): array {
         return [
             'visible' => [policy::ACCESS_VISIBLE, true],
@@ -248,4 +269,3 @@ final class policy_test extends \advanced_testcase {
         ];
     }
 }
-
