@@ -17,6 +17,7 @@
 namespace local_sitehomeaccess;
 
 use context_course;
+use context_block;
 use context_module;
 use context_system;
 use local_sitehomeaccess\access\protected_context;
@@ -67,6 +68,27 @@ final class protected_context_test extends \advanced_testcase {
             'coursecontext' => $context->get_course_context(false)?->instanceid,
         ]));
         $this->assertTrue(protected_context::context_id_is_protected($context->id));
+    }
+
+    public function test_site_home_block_is_protected(): void {
+        $this->resetAfterTest();
+        $block = $this->getDataGenerator()->create_block('online_users', [
+            'parentcontextid' => context_course::instance(SITEID)->id,
+        ]);
+        $context = context_block::instance($block->id);
+
+        $this->assertTrue(protected_context::contains($context));
+        $this->assertTrue(protected_context::context_id_is_protected($context->id));
+    }
+
+    public function test_ordinary_course_block_is_not_protected(): void {
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $block = $this->getDataGenerator()->create_block('online_users', [
+            'parentcontextid' => context_course::instance($course->id)->id,
+        ]);
+
+        $this->assertFalse(protected_context::contains(context_block::instance($block->id)));
     }
 
     public function test_missing_context_is_not_protected(): void {
