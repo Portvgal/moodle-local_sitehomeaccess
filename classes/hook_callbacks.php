@@ -63,13 +63,13 @@ final class hook_callbacks {
         if (!runtime::should_enforce()) {
             return;
         }
-        $decision = policy::evaluate();
-        if ($decision->allowed) {
+        $page = $hook->renderer->get_page();
+        if (!protected_context::contains($page->context)) {
             return;
         }
 
-        $page = $hook->renderer->get_page();
-        if (!protected_context::contains($page->context)) {
+        $decision = policy::evaluate();
+        if ($decision->allowed) {
             return;
         }
 
@@ -93,7 +93,7 @@ final class hook_callbacks {
 
         unset($hook);
 
-        if (!runtime::should_enforce() || $SCRIPT !== '/pluginfile.php' || policy::evaluate()->allowed) {
+        if (!runtime::should_enforce() || $SCRIPT !== '/pluginfile.php') {
             return;
         }
 
@@ -105,6 +105,10 @@ final class hook_callbacks {
         $parts = explode('/', ltrim($relativepath, '/'));
         $contextid = (int)($parts[0] ?? 0);
         if (!protected_context::context_id_is_protected($contextid)) {
+            return;
+        }
+
+        if (policy::evaluate()->allowed) {
             return;
         }
 
