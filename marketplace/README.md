@@ -1,5 +1,7 @@
 # Marketplace artwork
 
+Submission copy and the final upload checklist are available in `listing.md`.
+
 - `sitehomeaccess-logo-shield.png`: home-and-shield concept focused on protection.
 - `sitehomeaccess-logo-cohorts.png`: cohort-access concept focused on selective access.
 
