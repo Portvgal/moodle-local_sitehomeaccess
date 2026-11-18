@@ -36,6 +36,8 @@ namespace local_sitehomeaccess;
 final class capability_string_test extends \advanced_testcase {
     /**
      * Test that the bypass capability has a human-readable label.
+     *
+     * @covers ::get_capability_string
      */
     public function test_bypass_capability_label_is_available(): void {
         $this->assertSame(
