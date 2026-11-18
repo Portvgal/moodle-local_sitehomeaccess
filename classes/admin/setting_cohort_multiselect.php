@@ -52,17 +52,21 @@ final class setting_cohort_multiselect extends admin_setting_configmultiselect {
         }
 
         $this->choices = [];
-        $cohorts = $DB->get_records('cohort', null, 'name ASC, id ASC', 'id, name, contextid');
-        foreach ($cohorts as $cohort) {
-            $context = context::instance_by_id((int)$cohort->contextid, IGNORE_MISSING);
-            if (!$context) {
-                continue;
+        $cohorts = $DB->get_recordset('cohort', null, 'name ASC, id ASC', 'id, name, contextid');
+        try {
+            foreach ($cohorts as $cohort) {
+                $context = context::instance_by_id((int)$cohort->contextid, IGNORE_MISSING);
+                if (!$context) {
+                    continue;
+                }
+                $name = format_string($cohort->name, true, ['context' => $context]);
+                $this->choices[(int)$cohort->id] = get_string('cohortchoice', 'local_sitehomeaccess', (object)[
+                    'name' => $name,
+                    'context' => $context->get_context_name(false),
+                ]);
             }
-            $name = format_string($cohort->name, true, ['context' => $context]);
-            $this->choices[(int)$cohort->id] = get_string('cohortchoice', 'local_sitehomeaccess', (object)[
-                'name' => $name,
-                'context' => $context->get_context_name(false),
-            ]);
+        } finally {
+            $cohorts->close();
         }
 
         return true;
